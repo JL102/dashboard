@@ -19,7 +19,8 @@ export default ts.config(
 			globals: {
 				...globals.browser,
 				...globals.node
-			}
+			},
+			'prefer-const': ['off']
 		}
 	},
 	{
@@ -30,5 +31,6 @@ export default ts.config(
 				parser: ts.parser
 			}
 		}
-	}
+	},
+	
 );
