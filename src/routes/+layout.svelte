@@ -3,8 +3,9 @@
 	import type { ButtonOnClickContext, SnackbarContext, TitleContext } from '$lib/types';
 	import IconButton from '@smui/icon-button';
 	import TopAppBar, { AutoAdjust, Row, Section, Title } from '@smui/top-app-bar';
-	import { setContext } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { writable } from 'svelte/store';
+	import Tooltip, { Wrapper } from '@smui/tooltip';
 	import Drawer, {
 		AppContent,
 		Content,
@@ -22,6 +23,7 @@
 	import { classMap } from '@smui/common/internal';
 	import { deviceOnline } from '$lib/utils';
 	import { afterNavigate } from '$app/navigation';
+	import { base } from '$app/paths';
 
 	let { children } = $props();
 
@@ -42,7 +44,7 @@
 			return snackbar.close(...args);
 		}
 	};
-	
+
 	afterNavigate(() => (drawerOpen = false));
 
 	let qrButtonClick: ButtonOnClickContext = writable(undefined);
@@ -72,6 +74,116 @@
 	setContext('snackbar', snackbarContext);
 
 	let drawerOpen = $state(false);
+
+	let updateAvailable = $state(false);
+	let updateInstalling = $state(false);
+	let waitingWorker: ServiceWorker | null = null;
+
+	async function attemptServiceWorkerRegistration() {
+		console.debug('Attempting to register serviceworker');
+		navigator.serviceWorker.addEventListener('message', (event) => {
+			if (!event.data) return;
+			// Only reload the page if we've marked an update as being available
+			if (event.data.msg === 'UPDATE_DONE') {
+				let newVersion = String(event.data.version);
+				console.warn(`Update done! Version=${newVersion}`);
+				updateInstalling = false;
+				// Save the version of the newly installed service worker
+				localStorage.setItem('serviceWorkerVersion', newVersion);
+				if (!updateAvailable) return;
+				sessionStorage.setItem('justUpdated', 'true'); // store a flag for a message to show once the page reloads
+				location.reload();
+			}
+			if (event.data.msg === 'RETURN_VERSION') {
+				let lastKnownVersion = localStorage.getItem('serviceWorkerVersion');
+				let currentVersion = String(event.data.version);
+				console.debug(
+					`Received service worker version: ${currentVersion} - Last known worker version: ${lastKnownVersion}`
+				);
+				if (lastKnownVersion !== currentVersion) {
+					console.info('Version mismatch found! Notifying user and saving version...');
+					localStorage.setItem('serviceWorkerVersion', currentVersion);
+					snackbar.open('PWA has been updated');
+				}
+			}
+		});
+		const registration = await navigator.serviceWorker.register(`${base}/service-worker.js`, {
+			type: 'module'
+		});
+
+		if (registration.installing) {
+			updateInstalling = true;
+		}
+
+		// If we have a currently active service worker AND one that's waiting for activation, then we can say that an update is available
+		if (registration.waiting && registration.active) {
+			waitingWorker = registration.waiting;
+			updateAvailable = true;
+		}
+
+		if (registration.active && !registration.waiting && !registration.installing) {
+			console.warn(
+				'There is an active worker and none that are installing or waiting. Requesting current version...'
+			);
+			if (registration.active !== navigator.serviceWorker.controller)
+				console.warn('navigator.serviceWorker.controller is not the same as registration.active!');
+			registration.active.postMessage({ msg: 'GET_VERSION' });
+		}
+
+		registration.onupdatefound = () => {
+			console.warn(
+				`updatefound event firing! installing=${!!registration.installing}, waiting=${!!registration.waiting}, active=${!!registration.active}`
+			);
+			// Only show an update available if there's currently a service worker
+			if (registration.installing && registration.active) {
+				updateInstalling = true;
+				let installingWorker = registration.installing;
+				installingWorker.onstatechange = () => {
+					if (installingWorker.state === 'installed') {
+						console.warn('New worker is waiting to be activated!');
+						updateAvailable = true;
+						updateInstalling = false;
+						waitingWorker = installingWorker;
+					}
+					if (installingWorker.state === 'activated') {
+						updateInstalling = false;
+					}
+				};
+			}
+		};
+		console.trace('Done with attemptServiceWorkerRegistration');
+	}
+
+	async function handleInstallButtonClick() {
+		if (!waitingWorker) return snackbar.error('waitingWorker not defined!');
+		// let result = await dialogContext.show()
+		console.info('Posting SKIP_WAITING message to service worker!');
+		waitingWorker.postMessage({ msg: 'SKIP_WAITING' });
+	}
+
+	onMount(async () => {
+		if ('serviceWorker' in navigator) {
+			if ($deviceOnline) {
+				console.log('Device online; attempting to register serviceWorker');
+				attemptServiceWorkerRegistration().catch((err) => console.error(err));
+			} else {
+				console.log('Device not online; Waiting for that to change');
+				let unsub = deviceOnline.subscribe((online) => {
+					if (online) {
+						attemptServiceWorkerRegistration()
+							.then(unsub)
+							.catch((err) => console.error(err));
+					}
+				});
+			}
+		} else console.error('serviceWorker not found!');
+
+		// show a snackbar if we just got an update
+		if (sessionStorage.getItem('justUpdated') === 'true') {
+			snackbar.open('PWA has been updated');
+			sessionStorage.removeItem('justUpdated');
+		}
+	});
 </script>
 
 <TopAppBar bind:this={topAppBar} variant="standard">
@@ -93,6 +205,24 @@
 			</Title>
 		</Section>
 		<Section align="end" toolbar>
+			{#if updateAvailable}
+				<Wrapper class="header-tooltip-wrapper" rich>
+					<IconButton class="material-icons" onclick={handleInstallButtonClick}
+						>system_update</IconButton
+					>
+					<Tooltip surface$class="header-tooltip" xPos="start"
+						>An update is available. Click to restart.</Tooltip
+					>
+				</Wrapper>
+			{/if}
+			{#if updateInstalling}
+				<Wrapper class="header-tooltip-wrapper" rich>
+					<IconButton class="material-icons hourglass">hourglass_empty</IconButton>
+					<Tooltip surface$class="header-tooltip" xPos="start"
+						>An update is downloading in the background.</Tooltip
+					>
+				</Wrapper>
+			{/if}
 			{#if $qrButtonClick}
 				<IconButton onclick={$qrButtonClick} class="material-icons">qr_code</IconButton>
 			{/if}
@@ -141,13 +271,13 @@
 	</Header>
 	<Content>
 		<List>
-			<Item href="/setup" activated={page.route.id === '/setup'}>
+			<Item href={`${base}/setup`} activated={page.route.id === '/setup'}>
 				<Text>Setup</Text>
 			</Item>
-			<Item href="/" activated={page.route.id === '/'}>
+			<Item href={`${base}/`} activated={page.route.id === '/'}>
 				<Text>Laptop In Stands</Text>
 			</Item>
-			<Item href="/on-field" activated={page.route.id === '/on-field'}>
+			<Item href={`${base}/on-field`} activated={page.route.id === '/on-field'}>
 				<Text>Phone On Field</Text>
 			</Item>
 		</List>
@@ -163,6 +293,11 @@
 </AutoAdjust>
 
 <style>
+	:global(.header-tooltip) {
+		position: relative;
+		left: -48px;
+		width: calc(100% + 48px);
+	}
 	.title {
 		line-height: 1.625rem;
 	}
