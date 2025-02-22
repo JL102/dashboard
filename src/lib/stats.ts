@@ -55,6 +55,7 @@ export interface CsvLayout2024Raw {
 }
 
 export interface CsvLayout2024Parsed {
+	key: string; // eventkey_matchnum_role, e.g. 2024mrcmp_4_r1
 	autoFailure: boolean;
 	avgCycleTime: number;
 	broke: boolean;
@@ -154,7 +155,10 @@ export function parseCsvLayout2024(input: CsvLayout2024Raw[]): CsvLayout2024Pars
 			});
 		}
 		
+		let key = `${item.eventkey}_${item.matchNum}_${item.role}`;
+		
 		return {
+			key,
 			autoFailure: parseBool(item.autoFailure),
 			avgCycleTime: parseFloat(item.avgCycleTime),
 			broke: parseBool(item.broke),

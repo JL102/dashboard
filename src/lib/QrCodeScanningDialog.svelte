@@ -35,9 +35,11 @@
 		<IconButton action="close" class="material-icons">close</IconButton>
 	</Header> -->
 	<Content id="fullscreen-content">
-		<QrCodeScanner on:data={(e) => {
-			snackbar.open(e.detail.text);
-		}} enabled={isOpen} />
+		{#if isOpen}
+			<QrCodeScanner on:data={(e) => {
+				snackbar.open(e.detail.text);
+			}} enabled={isOpen} />
+		{/if}
 	</Content>
 	<Actions>
 		<Button action="done">
