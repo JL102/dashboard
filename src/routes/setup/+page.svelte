@@ -5,8 +5,6 @@
 	import Select, { Option } from '@smui/select';
 	import Button from '@smui/button';
 	import { liveQuery } from 'dexie';
-	import { goto } from '$app/navigation';
-	import { base } from '$service-worker';
 
 	const { title } = getPageLayoutContexts();
 	

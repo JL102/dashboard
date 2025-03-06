@@ -1,5 +1,5 @@
 import { db } from "$lib/LocalDB";
-import { base } from "$service-worker";
+import { base } from "$app/paths";
 import { redirect } from "@sveltejs/kit";
 
 export async function load() {
