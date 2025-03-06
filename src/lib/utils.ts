@@ -1,7 +1,7 @@
 import { getContext } from "svelte";
 import type { ButtonOnClickContext, SnackbarContext, TitleContext } from "./types";
 import { db, type Match } from "./LocalDB";
-import { readable } from "svelte/store";
+import { readable, writable } from "svelte/store";
 
 export function getPageLayoutContexts() {
 	const snackbar = getContext('snackbar') as SnackbarContext;
@@ -92,6 +92,8 @@ export const deviceOnline = readable(
 			);
 	}
 );
+
+export const authenticated = writable(false);
 
 export function matchToString(match: Match|undefined) {
 	if (!match) return '';

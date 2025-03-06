@@ -2,26 +2,19 @@
 	import { db } from '$lib/LocalDB';
 	import MatchPicker from '$lib/MatchPicker.svelte';
 	import QrCodeScanningDialog from '$lib/QrCodeScanningDialog.svelte';
-	import {
-		filterByTeam,
-		parseCsvLayout2024,
-		type CsvLayout2024Raw
-	} from '$lib/stats';
+	import { filterByTeam } from '$lib/stats';
 	import TeamStats from '$lib/TeamStats.svelte';
-	import { getPageLayoutContexts } from '$lib/utils';
-	import { parse } from 'csv-parse/browser/esm/sync';
-// Import the synchronous parser for browser
+	import { authenticated, getPageLayoutContexts } from '$lib/utils';
 	import Radio from '@smui/radio';
 	import { liveQuery } from 'dexie';
 
 	import MatchPickerTba from '$lib/MatchPickerTBA.svelte';
 	import FormField from '@smui/form-field';
-	import { downloadCsv2024 } from '$lib/firebase';
+	import { downloadCsv2025 } from '$lib/firebase';
+	import { goto } from '$app/navigation';
 
-	let files: FileList | undefined = $state(undefined);
-	let rawData: CsvLayout2024Raw[] = $state([]);
-	// let parsedData: CsvLayout2024Parsed[] = $state.raw([]);
-	let csvData = $derived(liveQuery(() => db.csv2024.toCollection().toArray()));
+	// let parsedData: CsvLayout2025Parsed[] = $state.raw([]);
+	let csvData = $derived(liveQuery(() => db.csv2025.toCollection().toArray()));
 
 	const { snackbar, qrButtonClick, title, downloadButtonClick, uploadButtonClick } =
 		getPageLayoutContexts();
@@ -30,11 +23,11 @@
 		qrScanningDialog.open();
 	});
 	downloadButtonClick.set(async () => {
-		let data = await downloadCsv2024();
+		let data = await downloadCsv2025();
 		console.log(data);
-		await db.transaction('rw', db.csv2024, async () => {
-			await db.csv2024.bulkPut(data);
-		})
+		await db.transaction('rw', db.csv2025, async () => {
+			await db.csv2025.bulkPut(data);
+		});
 	});
 	uploadButtonClick.set(undefined);
 
@@ -60,27 +53,6 @@
 	let red2 = $state(undefined);
 	let red3 = $state(undefined);
 
-	// Function to handle file reading and parsing
-	async function handleFile(file: File) {
-		const reader = new FileReader();
-
-		reader.onload = (event) => {
-			const text = event.target?.result as string;
-			rawData = parse(text, {
-				columns: true, // Assuming the CSV has headers
-				skip_empty_lines: true
-			});
-			console.log(rawData);
-			let parsedData = parseCsvLayout2024(rawData);
-			db.csv2024.bulkPut(parsedData);
-		};
-
-		reader.onerror = (event) => {
-			console.error('File could not be read: ' + event.target?.error);
-		};
-
-		reader.readAsText(file);
-	}
 	let matchList = $derived(
 		liveQuery(async () => {
 			const currentEvent = await db.current_event.toCollection().first();
@@ -103,9 +75,11 @@
 />
 
 <div class="container mx-auto">
-	<h1 class="text-lg">Pick a match, either by match number (using TBA) or by entering team numbers manually</h1>
+	<h1 class="text-lg">
+		Pick a match, either by match number (using TBA) or by entering team numbers manually
+	</h1>
 
-	<div class='grid grid-cols-2 justify-items-center'>
+	<div class="grid grid-cols-2 justify-items-center">
 		<FormField>
 			<Radio bind:group={pickerMode} value="tba" touch />
 			{#snippet label()}
@@ -122,7 +96,16 @@
 	{#if pickerMode === 'manual'}
 		<MatchPicker {teamList} bind:blue1 bind:blue2 bind:blue3 bind:red1 bind:red2 bind:red3 />
 	{:else}
-		<MatchPickerTba {teamList} matchList={matchList} bind:blue1 bind:blue2 bind:blue3 bind:red1 bind:red2 bind:red3 />
+		<MatchPickerTba
+			{teamList}
+			{matchList}
+			bind:blue1
+			bind:blue2
+			bind:blue3
+			bind:red1
+			bind:red2
+			bind:red3
+		/>
 	{/if}
 
 	<div class="grid grid-cols-1 gap-2 md:grid-cols-3">

@@ -1,11 +1,13 @@
 <script lang="ts">
-	import { uploadCsv2024 } from '$lib/firebase';
+	import { goto } from '$app/navigation';
+	import { base } from '$app/paths';
+	import { uploadCsv2024, uploadCsv2025 } from '$lib/firebase';
 	import { db } from '$lib/LocalDB';
 	import MatchPicker from '$lib/MatchPicker.svelte';
 	import QrCodeScanningDialog from '$lib/QrCodeScanningDialog.svelte';
 	import { filterByTeam, parseCsvLayout2024, type CsvLayout2024Parsed, type CsvLayout2024Raw } from '$lib/stats';
 	import TeamStats from '$lib/TeamStats.svelte';
-	import { getPageLayoutContexts } from '$lib/utils';
+	import { authenticated, getPageLayoutContexts } from '$lib/utils';
 	import Button, { Label } from '@smui/button';
 	import { parse } from 'csv-parse/browser/esm/sync'; // Import the synchronous parser for browser
 	import { liveQuery } from 'dexie';
@@ -14,7 +16,7 @@
 	let files: FileList | undefined = $state(undefined);
 	let rawData: CsvLayout2024Raw[] = $state([]);
 	// let parsedData: CsvLayout2024Parsed[] = $state.raw([]);
-	let csvData = $derived(liveQuery(() => db.csv2024.toCollection().toArray()));
+	let csvData = $derived(liveQuery(() => db.csv2025.toCollection().toArray()));
 	
 	const { snackbar, qrButtonClick, title, downloadButtonClick, uploadButtonClick } = getPageLayoutContexts();
 	
@@ -24,7 +26,8 @@
 	downloadButtonClick.set(undefined);
 	uploadButtonClick.set(async () => {
 		if ($csvData) {
-			await uploadCsv2024($csvData);
+			// await uploadCsv2024($csvData);
+			await uploadCsv2025($csvData);
 		}
 	});
 	
@@ -76,26 +79,26 @@
 	
 	let qrScanningDialog: QrCodeScanningDialog;
 
-	$effect(() => {
-		if (files && files[0]) {
-			let file = files[0];
-			if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-				console.log('parsing thingy', file);
-				handleFile(file);
-			}
-			else {
-				console.error('Incorrect file.type or file.name does not end with csv', file.type, file.name);
-				console.log(file);
-			}
-		}
-	});
+	// $effect(() => {
+	// 	if (files && files[0]) {
+	// 		let file = files[0];
+	// 		if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+	// 			console.log('parsing thingy', file);
+	// 			handleFile(file);
+	// 		}
+	// 		else {
+	// 			console.error('Incorrect file.type or file.name does not end with csv', file.type, file.name);
+	// 			console.log(file);
+	// 		}
+	// 	}
+	// });
 </script>
 
 <QrCodeScanningDialog bind:this={qrScanningDialog} onclose={(action) => {console.log(action)}} />
 
 <div class='container mx-auto'>
 	<h1 class="text-lg">Welcome to SvelteKit</h1>
-	<input type="file" bind:files />
+	<!-- <input type="file" bind:files />
 	
 	<Button onclick={() => {qrScanningDialog.open();}} >Press me</Button>
 
@@ -103,7 +106,7 @@
 		<p>
 			{files[0].name}
 		</p>
-	{/if}
+	{/if} -->
 	
 	<MatchPicker {teamList} bind:blue1 bind:blue2 bind:blue3 bind:red1 bind:red2 bind:red3/>
 	

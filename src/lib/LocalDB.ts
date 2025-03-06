@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie';
-import { type CsvLayout2024Parsed } from './stats';
+import { type CsvLayout2024Parsed, type CsvLayout2025Parsed } from './stats';
+import { authenticated } from './utils';
 
 export interface Event {
 	key: string,
@@ -54,19 +55,23 @@ export interface ETagResponse {
 
 const db = new Dexie('AEMDashboard') as Dexie & {
 	csv2024: Table<CsvLayout2024Parsed>,
+	csv2025: Table<CsvLayout2025Parsed>,
 	events: Table<Event>,
 	matches: Table<Match>,
 	eTagResponses: Table<ETagResponse>,
 	current_event: Table<Event>,
+	authenticated: Table<{authenticated: boolean}>,
 };
 
 // Schema declaration:
-db.version(4).stores({
+db.version(8).stores({
 	csv2024: '[eventkey+role+matchNum], [eventkey+teamNum]',
+	csv2025: '[eventkey+role+matchNum], [eventkey+teamNum]',
 	events: 'key, year',
 	matches: 'key, event_key, [event_key+match_number]',
 	eTagResponses: '&url',
 	current_event: 'key',
+	authenticated: '++',
 });
 
 export { db };

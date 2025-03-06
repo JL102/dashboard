@@ -2,6 +2,7 @@
 	import { createEventDispatcher, getContext, onDestroy, onMount } from 'svelte';
 	import type { SnackbarContext } from './types';
 	import { UAParser } from 'ua-parser-js';
+	import { base } from '$app/paths';
 	
 	// todo: actual function
 	function getAvailableWindowSize(elem: HTMLElement) {
@@ -105,7 +106,11 @@
 	let waitingForWorker = false;
 
 	async function initWorker() {
-		worker = new Worker('/lib/wasmQrWorker.js');
+		worker = new Worker(`${base}/lib/wasmQrWorker.js`);
+		// send initialization message with url base
+		worker.postMessage({
+			base
+		});
 		worker.onmessage = (ev) => {
 			if (ev.data.data) {
 				beep();

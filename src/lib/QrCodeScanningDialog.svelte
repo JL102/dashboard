@@ -4,6 +4,8 @@
 	import Button, { Label } from '@smui/button';
 	import QrCodeScanner from './QrCodeScanner.svelte';
 	import { getPageLayoutContexts } from './utils';
+	import { parseQr2025 } from './stats';
+	import { db } from './LocalDB';
 
 	let isOpen = $state(false);
 	
@@ -21,6 +23,8 @@
 		onclose(e.detail.action);
 	}
 	
+	let lastScanned = ''; // save last scanned data to prevent duplicate scans
+	
 	const { snackbar } = getPageLayoutContexts();
 </script>
 
@@ -36,9 +40,30 @@
 	</Header> -->
 	<Content id="fullscreen-content">
 		{#if isOpen}
-			<QrCodeScanner on:data={(e) => {
-				snackbar.open(e.detail.text);
-			}} enabled={isOpen} />
+			<QrCodeScanner on:data={async (e) => {
+				let data = e.detail.text;
+				
+				// prevent duplicate scans
+				if (data === lastScanned) {
+					console.debug('duplicate scan');
+					return;
+				}
+				lastScanned = data;
+				
+				console.info(data);
+				try {
+					let csvParsed = parseQr2025(data);
+					console.log('parsed', csvParsed);
+					await db.transaction('rw', db.csv2025, async () => {
+						await db.csv2025.put(csvParsed);
+						snackbar.open(`Scanned ${csvParsed.eventkey} Match ${csvParsed.matchNum} Team ${csvParsed.teamNum}, from ${csvParsed.scouterInitials}`);
+					});
+				}
+				catch (err) {
+					console.error(err);
+					snackbar.error(String(err));
+				}
+			}} enabled={true} />
 		{/if}
 	</Content>
 	<Actions>

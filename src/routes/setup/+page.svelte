@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { db, type Event } from '$lib/LocalDB';
-	import { getPageLayoutContexts, fetchTBA } from '$lib/utils';
+	import { getPageLayoutContexts, fetchTBA, authenticated } from '$lib/utils';
 	// import Autocomplete from '@smui-extra/autocomplete';
 	import Select, { Option } from '@smui/select';
 	import Button from '@smui/button';
 	import { liveQuery } from 'dexie';
+	import { goto } from '$app/navigation';
+	import { base } from '$service-worker';
 
 	const { title } = getPageLayoutContexts();
 	
 	const { data } = $props();
 
-	const year = 2024; //
+	const year = 2025; //
 
 	// const currentEvent = $derived(liveQuery(() => db.current_event.toCollection().first()));
 
