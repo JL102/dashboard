@@ -23,7 +23,7 @@
 		onclose(e.detail.action);
 	}
 	
-	let lastScanned = ''; // save last scanned data to prevent duplicate scans
+	// let lastScanned = ''; // save last scanned data to prevent duplicate scans
 	
 	const { snackbar } = getPageLayoutContexts();
 </script>
@@ -43,12 +43,12 @@
 			<QrCodeScanner on:data={async (e) => {
 				let data = e.detail.text;
 				
-				// prevent duplicate scans
-				if (data === lastScanned) {
-					console.debug('duplicate scan');
-					return;
-				}
-				lastScanned = data;
+				// // prevent duplicate scans
+				// if (data === lastScanned) {
+				// 	console.debug('duplicate scan');
+				// 	return;
+				// }
+				// lastScanned = data;
 				
 				console.info(data);
 				try {
@@ -56,7 +56,7 @@
 					console.log('parsed', csvParsed);
 					await db.transaction('rw', db.csv2025, async () => {
 						await db.csv2025.put(csvParsed);
-						snackbar.open(`Scanned ${csvParsed.eventkey} Match ${csvParsed.matchNum} Team ${csvParsed.teamNum}, from ${csvParsed.scouterInitials}`);
+						snackbar.open(`Scanned ${csvParsed.eventkey} Match ${csvParsed.matchNum} Team ${csvParsed.teamNum}, from ${csvParsed.scouterInitials}`, 1000);
 					});
 				}
 				catch (err) {

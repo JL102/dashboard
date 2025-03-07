@@ -104,6 +104,8 @@
 	////////////////
 	let worker: Worker | null = null;
 	let waitingForWorker = false;
+	
+	let lastScanned = ''; // save last scanned data to prevent duplicate scans
 
 	async function initWorker() {
 		worker = new Worker(`${base}/lib/wasmQrWorker.js`);
@@ -112,11 +114,17 @@
 			base
 		});
 		worker.onmessage = (ev) => {
+			waitingForWorker = false;
 			if (ev.data.data) {
+				// prevent duplicate scans
+				if (ev.data.data === lastScanned) {
+					console.debug('duplicate scan');
+					return;
+				}
+				lastScanned = ev.data.data;
 				beep();
 				onQrCodeData(ev.data.data, ev.data.ms);
 			}
-			waitingForWorker = false;
 			// if (lastMessageSentTime) debugInfo = `QR scan time: ${ev.data.ms} ms, from message sent to now: ${performance.now() - lastMessageSentTime}`;
 		};
 	}
