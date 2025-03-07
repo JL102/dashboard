@@ -42,6 +42,14 @@
 			red2 = parseInt(red2Key.substring(3));
 			red3 = parseInt(red3Key.substring(3));
 		}
+		else {
+			blue1 = undefined;
+			blue2 = undefined;
+			blue3 = undefined;
+			red1 = undefined;
+			red2 = undefined;
+			red3 = undefined;
+		}
 	})
 
 </script>
