@@ -12,7 +12,7 @@
 	
 	async function onclick() {
 		if (!password) return;
-		if (password === `robotsdon'tquit1`) {
+		if (password === 'robotsdontquit1') {
 			await db.authenticated.put({
 				authenticated: true
 			});
