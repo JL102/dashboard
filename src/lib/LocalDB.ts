@@ -64,9 +64,9 @@ const db = new Dexie('AEMDashboard') as Dexie & {
 };
 
 // Schema declaration:
-db.version(8).stores({
+db.version(9).stores({
 	csv2024: '[eventkey+role+matchNum], [eventkey+teamNum]',
-	csv2025: '[eventkey+role+matchNum], [eventkey+teamNum]',
+	csv2025: '[eventkey+role+matchNum], [eventkey+teamNum], eventkey',
 	events: 'key, year',
 	matches: 'key, event_key, [event_key+match_number]',
 	eTagResponses: '&url',

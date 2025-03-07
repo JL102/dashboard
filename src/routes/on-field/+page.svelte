@@ -4,17 +4,22 @@
 	import QrCodeScanningDialog from '$lib/QrCodeScanningDialog.svelte';
 	import { filterByTeam } from '$lib/stats';
 	import TeamStats from '$lib/TeamStats.svelte';
-	import { authenticated, getPageLayoutContexts } from '$lib/utils';
+	import { getPageLayoutContexts } from '$lib/utils';
 	import Radio from '@smui/radio';
+	import Checkbox from '@smui/checkbox';
 	import { liveQuery } from 'dexie';
 
+	import { downloadCsv2025 } from '$lib/firebase';
 	import MatchPickerTba from '$lib/MatchPickerTBA.svelte';
 	import FormField from '@smui/form-field';
-	import { downloadCsv2025 } from '$lib/firebase';
-	import { goto } from '$app/navigation';
+	
+	const { data } = $props();
 
 	// let parsedData: CsvLayout2025Parsed[] = $state.raw([]);
-	let csvData = $derived(liveQuery(() => db.csv2025.toCollection().toArray()));
+	let csvData = $derived(liveQuery(() => {
+		if (queryAllEvents) return db.csv2025.toCollection().toArray();
+		return db.csv2025.where('eventkey').equals(data.event.key).toArray();
+	}));
 
 	const { snackbar, qrButtonClick, title, downloadButtonClick, uploadButtonClick } =
 		getPageLayoutContexts();
@@ -52,6 +57,8 @@
 	let red1 = $state(undefined);
 	let red2 = $state(undefined);
 	let red3 = $state(undefined);
+	
+	let queryAllEvents = $state(false);
 
 	let matchList = $derived(
 		liveQuery(async () => {
@@ -75,6 +82,12 @@
 />
 
 <div class="container mx-auto">
+	<FormField>
+		<Checkbox bind:checked={queryAllEvents}/>
+		{#snippet label()}
+			Query ALL events instead of just {data.event.name}?
+		{/snippet}
+	</FormField>
 	<h1 class="text-lg">
 		Pick a match, either by match number (using TBA) or by entering team numbers manually
 	</h1>

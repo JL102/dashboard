@@ -1,25 +1,22 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { base } from '$app/paths';
-	import { uploadCsv2024, uploadCsv2025 } from '$lib/firebase';
+	import { uploadCsv2025 } from '$lib/firebase';
 	import { db } from '$lib/LocalDB';
-	import MatchPicker from '$lib/MatchPicker.svelte';
 	import QrCodeScanningDialog from '$lib/QrCodeScanningDialog.svelte';
-	import { filterByTeam, parseCsvLayout2024, type CsvLayout2024Parsed, type CsvLayout2024Raw } from '$lib/stats';
-	import TeamStats from '$lib/TeamStats.svelte';
-	import { authenticated, getPageLayoutContexts } from '$lib/utils';
-	import Button, { Label } from '@smui/button';
-	import { parse } from 'csv-parse/browser/esm/sync'; // Import the synchronous parser for browser
+	import { parseCsvLayout2024, type CsvLayout2024Raw } from '$lib/stats';
+	import { getPageLayoutContexts } from '$lib/utils';
+	import { parse } from 'csv-parse/browser/esm/sync';
+	import DataTable, {Head, Body, Row, Cell} from '@smui/data-table';
 	import { liveQuery } from 'dexie';
-	import { onMount } from 'svelte';
+	import ViewEntryDialog from '$lib/ViewEntryDialog.svelte';
 
+	const { data } = $props();
+	
 	let files: FileList | undefined = $state(undefined);
 	let rawData: CsvLayout2024Raw[] = $state([]);
 	// let parsedData: CsvLayout2024Parsed[] = $state.raw([]);
-	let csvData = $derived(liveQuery(() => db.csv2025.toCollection().toArray()));
+	let csvData = $derived(liveQuery(() => db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum')));
 	
 	const { snackbar, qrButtonClick, title, downloadButtonClick, uploadButtonClick } = getPageLayoutContexts();
-	
 	qrButtonClick.set(() => {
 		qrScanningDialog.open();
 	});
@@ -30,21 +27,7 @@
 			await uploadCsv2025($csvData);
 		}
 	});
-	
 	title.set('Laptop In Stands dashboard');
-	
-	// List of unique teams
-	let teamList = $derived.by(() => {
-		if (!$csvData) return [];
-		let st = performance.now();
-		let set = new Set();
-		for (let item of $csvData) {
-			set.add(item.teamNum);
-		}
-		let list = Array.from(set);
-		console.log('teamlist', performance.now() - st);
-		return list;
-	});
 	
 	let blue1 = $state(undefined);
 	let blue2 = $state(undefined);
@@ -78,6 +61,7 @@
 	}
 	
 	let qrScanningDialog: QrCodeScanningDialog;
+	let viewEntryDialog: ViewEntryDialog;
 
 	// $effect(() => {
 	// 	if (files && files[0]) {
@@ -95,9 +79,9 @@
 </script>
 
 <QrCodeScanningDialog bind:this={qrScanningDialog} onclose={(action) => {console.log(action)}} />
+<ViewEntryDialog bind:this={viewEntryDialog} />
 
-<div class='container mx-auto'>
-	<h1 class="text-lg">Welcome to SvelteKit</h1>
+<div class='container mx-auto not-prose'>
 	<!-- <input type="file" bind:files />
 	
 	<Button onclick={() => {qrScanningDialog.open();}} >Press me</Button>
@@ -108,25 +92,28 @@
 		</p>
 	{/if} -->
 	
-	<MatchPicker {teamList} bind:blue1 bind:blue2 bind:blue3 bind:red1 bind:red2 bind:red3/>
-	
-	<div class='grid grid-cols-1 md:grid-cols-3 gap-2'>
-		{#if $csvData?.length > 0}
-			<TeamStats teamNum={blue1} data={filterByTeam($csvData, blue1)} spot='Blue 1' />
-			<TeamStats teamNum={blue2} data={filterByTeam($csvData, blue2)} spot='Blue 2' />
-			<TeamStats teamNum={blue3} data={filterByTeam($csvData, blue3)} spot='Blue 3' />
-			<TeamStats teamNum={red1} data={filterByTeam($csvData, red1)} spot='Red 1' />
-			<TeamStats teamNum={red2} data={filterByTeam($csvData, red2)} spot='Red 2' />
-			<TeamStats teamNum={red3} data={filterByTeam($csvData, red3)} spot='Red 3' />
-		{/if}
-	</div>
-
-	<!-- {#if rawData.length > 0}
-		<h2 class="text-xs">Parsed Data</h2>
-		<ul>
-			{#each rawData as row, i}
-				<li><pre>{JSON.stringify(row)}<br/>{JSON.stringify($csvData[i])}</pre></li>
+	<DataTable class="w-full">
+		<Head>
+			<Row>
+				<Cell>Key</Cell>
+				<Cell>Scouter</Cell>
+				<Cell>Total Scored</Cell>
+				<Cell>Auto</Cell>
+				<Cell>Teleop</Cell>
+				<Cell>Other Info</Cell>
+			</Row>
+		</Head>
+		<Body>
+			{#each $csvData as item}
+				<Row onclick={() => {viewEntryDialog.open(item)}}>
+					<Cell>{item.key}</Cell>
+					<Cell>{item.scouterInitials}</Cell>
+					<Cell>{item.totalScored}</Cell>
+					<Cell>{item.auto.length} cycles</Cell>
+					<Cell>{item.teleop.length} cycles</Cell>
+					<Cell>{item.otherInfo}</Cell>
+				</Row>
 			{/each}
-		</ul>
-	{/if} -->
+		</Body>
+	</DataTable>
 </div>

@@ -601,11 +601,29 @@ export function getClimbCapability2025(input: CsvLayout2025Parsed[]): string {
 	return 'None';
 }
 
+export function getScoreCapability2025(input: CsvLayout2025Parsed[]): string {
+	let canL1 = orStat(input, 'canScoreInL1');
+	let canL2 = orStat(input, 'canScoreInL2');
+	let canL3 = orStat(input, 'canScoreInL3');
+	let canL4 = orStat(input, 'canScoreInL4');
+	let canNet = orStat(input, 'canScoreInNet');
+	let canProcessor = orStat(input, 'canScoreInProcessor');
+	let capabilities: string[] = [];
+	if (canL1) capabilities.push('L1');
+	if (canL2) capabilities.push('L2');
+	if (canL3) capabilities.push('L3');
+	if (canL4) capabilities.push('L4');
+	if (canNet) capabilities.push('Net');
+	if (canProcessor) capabilities.push('Processor');
+	if (capabilities.length === 0) return 'None';
+	return capabilities.join(', ');
+};
+
 export function getClimbSuccessRate2025(input: CsvLayout2025Parsed[]): string {
-	if (input.length === 0) return '0% of 0';
+	if (input.length === 0) return '0 of 0';
 	let successes = input.filter(item => item.climbStatus === 'shallow' || item.climbStatus === 'deep').length;
 	let attempts = input.filter(item => item.climbStatus !== 'no attempt').length;
-	return `${round(successes / attempts * 100, 0)}% of ${attempts}`;
+	return `${successes} of ${attempts}`;
 }
 
 // export function getAvgBreakdown2025(input: CsvLayout2025Parsed[]): string {

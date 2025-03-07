@@ -6,7 +6,11 @@
 	import Button from '@smui/button';
 	import { liveQuery } from 'dexie';
 
-	const { title } = getPageLayoutContexts();
+	const { title, qrButtonClick, downloadButtonClick, uploadButtonClick } = getPageLayoutContexts();
+	
+	qrButtonClick.set(undefined);
+	downloadButtonClick.set(undefined);
+	uploadButtonClick.set(undefined);
 	
 	const { data } = $props();
 
@@ -67,7 +71,7 @@
 	title.set('Setup');
 </script>
 
-<section class="center not-prose m-auto grid grid-cols-2 gap-2 md:max-w-3xl">
+<section class="center not-prose m-auto grid grid-cols-1 gap-2 md:max-w-3xl md:grid-cols-2">
 	{#if $events}
 	<Select class="w-full" anchor$class='w-full' bind:value={selectedEventKey}>
 		<Option value={undefined}>Select event</Option>
@@ -83,11 +87,11 @@
 	label='Event'
 	></Autocomplete> -->
 
-	<Button class="w-max" variant="raised" onclick={downloadEvents}>Download Events for {year}</Button>
+	<Button class="w-full" variant="raised" onclick={downloadEvents}>Download Events for {year}</Button>
 	{#if selectedEvent}
 		<div>
 			{$matchesCount} matches downloaded for event {selectedEvent.name}
 		</div>
-		<Button class="w-max" variant="raised" onclick={downloadEventMatches}>Download Matches for {selectedEvent.name}</Button>
+		<Button class="w-full" variant="raised" onclick={downloadEventMatches}>Download Matches for {selectedEvent.name}</Button>
 	{/if}
 </section>
