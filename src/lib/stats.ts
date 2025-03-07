@@ -502,7 +502,7 @@ export function getArrOfStat<T extends CsvLayoutAnyParsed>(input: T[], stat: key
 	return input.map(item => item[stat]);
 }
 
-function round(value: number, numDecimalPlaces: number) {
+export function round(value: number, numDecimalPlaces: number) {
 	if (numDecimalPlaces < 0) return value;
 	return parseFloat(value.toFixed(numDecimalPlaces));
 }
@@ -566,14 +566,23 @@ export function getPreferredScoringMethod2024(input: CsvLayout2024Parsed[]): str
 }
 
 export function getMinNonZeroCoral2025(input: CsvLayout2025Parsed[]): number {
+	let numCoral = input
+		.map(item => item.coralScoredAuto + item.coralScoredTeleop)
+		.filter(item => item !== 0);
+	if (numCoral.length === 0) return 0;
+
+	let minNonZero = Infinity;
+	for (let item of numCoral) {
+		if (item < minNonZero) minNonZero = item;
+	}
+	return minNonZero;
+}
+
+export function getMaxCoral2025(input: CsvLayout2025Parsed[]): number {
 	if (input.length === 0) return 0;
 
 	let numCoral = input.map(item => item.coralScoredAuto + item.coralScoredTeleop);
-	let minNonZero = Infinity;
-	for (let item of numCoral) {
-		if (item !== 0 && item < minNonZero) minNonZero = item;
-	}
-	return minNonZero;
+	return max(numCoral);
 }
 
 export function getAvgMissedTotal2025(input: CsvLayout2025Parsed[], numDecimalPlaces = 2): number {
