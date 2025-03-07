@@ -28,13 +28,6 @@
 		}
 	});
 	title.set('Laptop In Stands dashboard');
-	
-	let blue1 = $state(undefined);
-	let blue2 = $state(undefined);
-	let blue3 = $state(undefined);
-	let red1 = $state(undefined);
-	let red2 = $state(undefined);
-	let red3 = $state(undefined);
 
 	// Function to handle file reading and parsing
 	async function handleFile(file: File) {
@@ -96,6 +89,7 @@
 		<Head>
 			<Row>
 				<Cell>Key</Cell>
+				<Cell>Team</Cell>
 				<Cell>Scouter</Cell>
 				<Cell>Total Scored</Cell>
 				<Cell>Auto</Cell>
@@ -107,6 +101,7 @@
 			{#each $csvData as item}
 				<Row onclick={() => {viewEntryDialog.open(item)}}>
 					<Cell>{item.key}</Cell>
+					<Cell>{item.teamNum}</Cell>
 					<Cell>{item.scouterInitials}</Cell>
 					<Cell>{item.totalScored}</Cell>
 					<Cell>{item.auto.length} cycles</Cell>
