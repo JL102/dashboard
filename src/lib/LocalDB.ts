@@ -76,3 +76,5 @@ db.version(8).stores({
 
 export { db };
 
+// @ts-ignore
+if ('window' in globalThis) window.db = db;

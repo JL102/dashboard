@@ -1,5 +1,5 @@
 import assert from "./assert";
-import { mode } from 'mathjs'
+import { mode, max } from 'mathjs'
 
 type stringbool = 'TRUE' | 'FALSE';
 type stringnum = `${number}`;
@@ -9,6 +9,7 @@ type startpos2025 = 'start1' | 'start2' | 'start3' | 'start4' | 'start5' | 'star
 type pickupMethod2024 = 'ground only' | 'source only' | 'ground and source' | 'none';
 type pickupMethod2025 = 'ground only' | 'reef only' | 'ground and reef' | 'none';
 type climbStatus2024 = 'no attempt' | 'climb failed' | 'climb success';
+type climbStatus2025 = 'no attempt' | 'fail' | 'shallow' | 'deep';
 type ColumnKey = `Column ${number}`;
 type ScoringLocation2024 = 'dropped' | 'speaker' | 'amp' | 'trap';
 type ScoringLocation2025 = 'drop' | 'reef' | 'processor' | 'net';
@@ -52,7 +53,7 @@ export interface CsvLayout2025Parsed {
 	mobility: string;
 	pickupMethodCoral: string;
 	pickupMethodAlgae: string;
-	climbStatus: string;
+	climbStatus: climbStatus2025;
 
 	// fails list (nine booleans)
 	stoppedAndRestarted: boolean;
@@ -180,7 +181,7 @@ export function parseQr2025(input: string): CsvLayout2025Parsed {
 		mobility,
 		pickupMethodCoral,
 		pickupMethodAlgae,
-		climbStatus,
+		climbStatusS,
 		stoppedAndRestartedS,
 		diedS,
 		tippedS,
@@ -251,6 +252,7 @@ export function parseQr2025(input: string): CsvLayout2025Parsed {
 	let teleop: TeleopPiece2025[] = [];
 	
 	eventkey = parseEventName2025(eventkey);
+	let climbStatus = climbStatusS as climbStatus2025; // note: no checks, trusting input
 	
 	// Split autoAndTeleop into arrays
 	let autoArr: string[] = [];
@@ -466,6 +468,29 @@ export function avgStat<T extends CsvLayoutAnyParsed>(input: T[], stat: keyof T,
 	return round(value, numDecimalPlaces);
 }
 
+export function orStat<T extends CsvLayoutAnyParsed>(input: T[], stat: keyof T): boolean {
+	for (let item of input) {
+		if (item[stat]) return true;
+	}
+	return false;
+}
+
+export function maxStat<T extends CsvLayoutAnyParsed>(input: T[], stat: keyof T): number {
+	if (input.length === 0) return 0;
+	const thisStatArr = getArrOfStat(input, stat) as number[];
+	return max(thisStatArr);
+}
+
+// export function minNonZeroStat<T extends CsvLayoutAnyParsed>(input: T[], stat: keyof T): number {
+// 	if (input.length === 0) return 0;
+// 	const thisStatArr = getArrOfStat(input, stat) as number[];
+// 	let minNonZero = Infinity;
+// 	for (let item of thisStatArr) {
+// 		if (item !== 0 && item < minNonZero) minNonZero = item;
+// 	}
+// 	return minNonZero;
+// }
+
 export function modeStat<T extends CsvLayoutAnyParsed>(input: T[], stat: keyof T): T[typeof stat] | undefined {
 	if (input.length === 0) return undefined;
 	const thisStatArr = getArrOfStat(input, stat);
@@ -516,6 +541,15 @@ export function getPreferredPickupMethod2025(input: CsvLayout2025Parsed[]): pick
 	return modeStat(input, 'pickupMethodCoral') as pickupMethod2025;
 }
 
+// export function getMaxScoredPerMatch2025(input: CsvLayout2025Parsed[]): number {
+// 	let maxScored = 0;
+// 	for (let item of input) {
+// 		let totalScored = item.totalScored;
+// 		if (totalScored > maxScored) maxScored = totalScored;
+// 	}
+// 	return maxScored;
+// }
+
 export function getPreferredScoringMethod2024(input: CsvLayout2024Parsed[]): string {
 	let speakers = 0;
 	let amps = 0;
@@ -530,6 +564,54 @@ export function getPreferredScoringMethod2024(input: CsvLayout2024Parsed[]): str
 	if (speakers < amps) return 'amp'
 	return 'equal';
 }
+
+export function getMinNonZeroCoral2025(input: CsvLayout2025Parsed[]): number {
+	if (input.length === 0) return 0;
+
+	let numCoral = input.map(item => item.coralScoredAuto + item.coralScoredTeleop);
+	let minNonZero = Infinity;
+	for (let item of numCoral) {
+		if (item !== 0 && item < minNonZero) minNonZero = item;
+	}
+	return minNonZero;
+}
+
+export function getAvgMissedTotal2025(input: CsvLayout2025Parsed[], numDecimalPlaces = 2): number {
+	if (input.length === 0) return 0;
+
+	let missed = input.map(item => item.missedReef + item.missedNet + item.missedProcessor);
+	let total = 0;
+	for (let item of missed) {
+		total += item;
+	}
+	let value = total / input.length;
+	return round(value, numDecimalPlaces);
+}
+
+export function getClimbCapability2025(input: CsvLayout2025Parsed[]): string {
+	let canShallow = false;
+	let canDeep = false;
+	input.forEach(item => {
+		if (item.climbStatus === 'shallow') canShallow = true;
+		if (item.climbStatus === 'deep') canDeep = true;
+	});
+	if (canShallow && canDeep) return 'Both';
+	if (canShallow) return 'Shallow only';
+	if (canDeep) return 'Deep only';
+	return 'None';
+}
+
+export function getClimbSuccessRate2025(input: CsvLayout2025Parsed[]): string {
+	if (input.length === 0) return '0% of 0';
+	let successes = input.filter(item => item.climbStatus === 'shallow' || item.climbStatus === 'deep').length;
+	let attempts = input.filter(item => item.climbStatus !== 'no attempt').length;
+	return `${round(successes / attempts * 100, 0)}% of ${attempts}`;
+}
+
+// export function getAvgBreakdown2025(input: CsvLayout2025Parsed[]): string {
+// 	let l1 = 0, l2 = 0, l3 = 0, l4 = 0;
+	
+// }
 
 export function getNumStartPos2024(input: CsvLayout2024Parsed[]) {
 
