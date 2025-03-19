@@ -26,7 +26,7 @@
 			onclick: async () => {
 				let link = document.createElement('a');
 				link.download = `2025_${data.event.name.replace(/ /g, '_')}.csv`;
-				link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(exportCsv2025($csvData))}`;
+				link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(await exportCsv2025($csvData))}`;
 				link.click();
 			}
 		},

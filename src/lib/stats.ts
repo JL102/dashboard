@@ -1,6 +1,7 @@
 import assert from "./assert";
 import { mode, max } from 'mathjs'
 import { stringify } from 'csv-stringify/browser/esm/sync'
+import { db } from "./LocalDB";
 
 type stringbool = 'TRUE' | 'FALSE';
 type stringnum = `${number}`;
@@ -168,13 +169,21 @@ function isValidScoringLocation2024(location: string): location is ScoringLocati
 	return location === 'dropped' || location === 'amp' || location === 'speaker' || location === 'trap';
 }
 
-export function exportCsv2025(input: CsvLayout2025Parsed[]): string {
+export async function exportCsv2025(input: CsvLayout2025Parsed[]): Promise<string> {
 	let arr: string[][] = [];
+	let events = await db.events.toCollection().toArray();
+	console.log(events);
+	let eventNames: Record<string, string> = {};
+	for (let event of events) {
+		eventNames[event.key] = event.name;
+	}
+	console.log(eventNames);
 	// headers
-	arr.push(['eventkey', 'role', 'scouterInitials', 'matchNum', 'teamNum', 'startPos', 'mobility', 'pickupMethodCoral', 'pickupMethodAlgae', 'climbStatus', 'stoppedAndRestarted', 'died', 'tipped', 'redCard', 'yellowCard', 'broke', 'autofailure', 'gotStuck', 'didNotFieldRobot', 'otherInfo', 'coralScoredAuto', 'coralScoredTeleop', 'algaeScoredAuto', 'algaeScoredTeleop', 'totalScored', 'canScoreInL1', 'canScoreInL2', 'canScoreInL3', 'canScoreInL4', 'canScoreInNet', 'canScoreInProcessor', 'scoredL1', 'scoredL2', 'scoredL3', 'scoredL4', 'scoredNet', 'scoredProcessor', 'missedReef', 'missedNet', 'missedProcessor', 'climbFailReason', 'auto', 'teleop']);
+	arr.push(['eventKey', 'eventName', 'role', 'scouterInitials', 'matchNum', 'teamNum', 'startPos', 'mobility', 'pickupMethodCoral', 'pickupMethodAlgae', 'climbStatus', 'stoppedAndRestarted', 'died', 'tipped', 'redCard', 'yellowCard', 'broke', 'autofailure', 'gotStuck', 'didNotFieldRobot', 'otherInfo', 'coralScoredAuto', 'coralScoredTeleop', 'algaeScoredAuto', 'algaeScoredTeleop', 'totalScored', 'canScoreInL1', 'canScoreInL2', 'canScoreInL3', 'canScoreInL4', 'canScoreInNet', 'canScoreInProcessor', 'scoredL1', 'scoredL2', 'scoredL3', 'scoredL4', 'scoredNet', 'scoredProcessor', 'missedReef', 'missedNet', 'missedProcessor', 'climbFailReason', 'auto', 'teleop']);
 	for (let item of input) {
 		arr.push([
 			item.eventkey,
+			(eventNames[item.eventkey] || 'Unknown Event'),
 			item.role,
 			item.scouterInitials,
 			String(item.matchNum),
