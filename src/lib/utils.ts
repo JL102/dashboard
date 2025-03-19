@@ -1,16 +1,14 @@
 import { getContext } from "svelte";
-import type { ButtonOnClickContext, SnackbarContext, TitleContext } from "./types";
+import type { ActionButtonsContext, ButtonOnClickContext, SnackbarContext, TitleContext } from "./types";
 import { db, type Match } from "./LocalDB";
 import { readable, writable } from "svelte/store";
 
 export function getPageLayoutContexts() {
 	const snackbar = getContext('snackbar') as SnackbarContext;
-	const qrButtonClick = getContext('qrButtonClick') as ButtonOnClickContext;
-	const uploadButtonClick = getContext('uploadButtonClick') as ButtonOnClickContext;
-	const downloadButtonClick = getContext('downloadButtonClick') as ButtonOnClickContext;
+	const actionButtons = getContext('actionButtons') as ActionButtonsContext
 	const title = getContext('title') as TitleContext;
 
-	return { snackbar, qrButtonClick, uploadButtonClick, downloadButtonClick, title };
+	return { actionButtons, snackbar, title };
 }
 
 const tba_api_key = '1yI5jxYxfCLxibPrqLVBAe9kpX4e9nWNGTMGqtU00GUAfqsocqLnH78uL8ouiEhX';

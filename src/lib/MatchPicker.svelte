@@ -15,43 +15,43 @@
 
 <div class='grid grid-cols-1 md:grid-cols-3 gap-4 not-prose'>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={blue1}
 		label='Blue 1'
 		options={teamList}
 	/>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={blue2}
 		label='Blue 2'
 		options={teamList}
 	/>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={blue3}
 		label='Blue 3'
 		options={teamList}
 	/>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={red1}
 		label='Red 1'
 		options={teamList}
 	/>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={red2}
 		label='Red 2'
 		options={teamList}
 	/>
 	<Autocomplete
-		class='w-max'
-		textfield$class='w-max'
+		class='w-full'
+		textfield$class='w-full'
 		bind:value={red3}
 		label='Red 3'
 		options={teamList}

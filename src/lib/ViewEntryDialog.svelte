@@ -15,7 +15,9 @@
 
 <Dialog bind:open={isOpen} class="not-prose">
 	{#if entry}
-		<Title>{entry.eventkey} Match {entry.matchNum} Team {entry.teamNum}</Title>
+		<Header>
+			<Title>{entry.eventkey} Match {entry.matchNum} Team {entry.teamNum}</Title>
+		</Header>
 		<Content class="not-prose">
 			{#each Object.entries(entry).sort() as [key, value]}
 				{#if Array.isArray(value)}

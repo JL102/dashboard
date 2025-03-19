@@ -6,15 +6,13 @@
 	import Button from '@smui/button';
 	import { liveQuery } from 'dexie';
 
-	const { title, qrButtonClick, downloadButtonClick, uploadButtonClick } = getPageLayoutContexts();
-	
-	qrButtonClick.set(undefined);
-	downloadButtonClick.set(undefined);
-	uploadButtonClick.set(undefined);
+	const { title, actionButtons } = getPageLayoutContexts();
 	
 	const { data } = $props();
 
 	const year = 2025; //
+
+	actionButtons.set([]);
 
 	// const currentEvent = $derived(liveQuery(() => db.current_event.toCollection().first()));
 

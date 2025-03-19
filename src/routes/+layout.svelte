@@ -1,29 +1,27 @@
 <script lang="ts">
-	import SimpleSnackbar from '$lib/SimpleSnackbar.svelte';
-	import type { ButtonOnClickContext, SnackbarContext, TitleContext } from '$lib/types';
-	import IconButton from '@smui/icon-button';
-	import TopAppBar, { AutoAdjust, Row, Section, Title } from '@smui/top-app-bar';
-	import { onMount, setContext } from 'svelte';
-	import { writable } from 'svelte/store';
-	import Tooltip, { Wrapper } from '@smui/tooltip';
-	import Drawer, {
-		AppContent,
-		Content,
-		Header,
-		Title as DTitle,
-		Subtitle,
-		Scrim
-	} from '@smui/drawer';
-	import Button, { Label } from '@smui/button';
-	import List, { Item, Text } from '@smui/list';
-	import { page } from '$app/state';
-	import '../app.css';
-	import { liveQuery } from 'dexie';
-	import { db } from '$lib/LocalDB';
-	import { classMap } from '@smui/common/internal';
-	import { deviceOnline } from '$lib/utils';
 	import { afterNavigate } from '$app/navigation';
 	import { base } from '$app/paths';
+	import { page } from '$app/state';
+	import { db } from '$lib/LocalDB';
+	import SimpleSnackbar from '$lib/SimpleSnackbar.svelte';
+	import type {
+		ActionButtonsContext,
+		ButtonOnClickContext,
+		SnackbarContext,
+		TitleContext
+	} from '$lib/types';
+	import { deviceOnline } from '$lib/utils';
+	import { classMap } from '@smui/common/internal';
+	import Drawer, { Content, Title as DTitle, Header, Scrim, Subtitle } from '@smui/drawer';
+	import IconButton from '@smui/icon-button';
+	import List, { Item, Text } from '@smui/list';
+	import Tooltip, { Wrapper } from '@smui/tooltip';
+	import TopAppBar, { AutoAdjust, Row, Section, Title } from '@smui/top-app-bar';
+	import { liveQuery } from 'dexie';
+	import { onMount, setContext } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
+	import { writable } from 'svelte/store';
+	import '../app.css';
 
 	let { children } = $props();
 
@@ -47,14 +45,11 @@
 
 	afterNavigate(() => (drawerOpen = false));
 
-	let qrButtonClick: ButtonOnClickContext = writable(undefined);
-	setContext('qrButtonClick', qrButtonClick);
+	let actionButtons: ActionButtonsContext = writable([]);
+	setContext('actionButtons', actionButtons);
 
-	let downloadButtonClick: ButtonOnClickContext = writable(undefined);
-	setContext('downloadButtonClick', downloadButtonClick);
-
-	let uploadButtonClick: ButtonOnClickContext = writable(undefined);
-	setContext('uploadButtonClick', uploadButtonClick);
+	let disabledButtons = new SvelteSet<string>([]);
+	$inspect(disabledButtons);
 
 	let title: TitleContext = writable('');
 	setContext('title', title);
@@ -223,40 +218,24 @@
 					>
 				</Wrapper>
 			{/if}
-			{#if $qrButtonClick}
-				<IconButton onclick={$qrButtonClick} class="material-icons">qr_code</IconButton>
-			{/if}
-			{#if $uploadButtonClick}
-				<IconButton
-					onclick={async () => {
-						transferInProgress = true;
-						await $uploadButtonClick();
-						transferInProgress = false;
-					}}
-					disabled={syncButtonsDisabled}
-					class={classMap({
-						'material-icons': true,
-						'opacity-50': syncButtonsDisabled
-					})}
-					>upload
-				</IconButton>
-			{/if}
-			{#if $downloadButtonClick}
-				<IconButton
-					onclick={async () => {
-						transferInProgress = true;
-						await $downloadButtonClick();
-						transferInProgress = false;
-					}}
-					disabled={syncButtonsDisabled}
-					class={classMap({
-						'material-icons': true,
-						'opacity-50': syncButtonsDisabled
-					})}
-				>
-					download
-				</IconButton>
-			{/if}
+			{#each $actionButtons as button}
+				<Wrapper class="header-tooltip-wrapper" rich>
+					<IconButton
+						disabled={disabledButtons.has(button.icon)}
+						onclick={async () => {
+							disabledButtons.add(button.icon);
+							await button.onclick();
+							disabledButtons.delete(button.icon);
+						}}
+						class="material-icons"
+					>
+						{button.icon}
+					</IconButton>
+					{#if button.tooltip}
+						<Tooltip surface$class="header-tooltip" xPos="start">{button.tooltip}</Tooltip>
+					{/if}
+				</Wrapper>
+			{/each}
 		</Section>
 	</Row>
 </TopAppBar>

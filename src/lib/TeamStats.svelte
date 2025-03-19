@@ -2,8 +2,12 @@
 	import Card from "@smui/card";
 	import { avgStat, getClimbCapability2025, getAvgMissedTotal2025, getMinNonZeroCoral2025, getPreferredPickupMethod2025, maxStat, modeStat, orStat, type CsvLayout2025Parsed, getClimbSuccessRate2025, getScoreCapability2025, getMaxCoral2025, round } from "./stats";
 	import { max } from "mathjs";
+	import Dialog, {Content, Title} from "@smui/dialog";
+	import CsvDataTableDialog from "./CsvDataTableDialog.svelte";
 
 	let { teamNum, data, spot }: { teamNum: number|undefined, data: CsvLayout2025Parsed[], spot: string } = $props();
+	
+	let csvDataTableDialog: CsvDataTableDialog;
 	
 </script>
 
@@ -12,7 +16,7 @@
 	{#if teamNum && data.length > 0}
 		<ul class="my-0">
 			<li>Avg algae scored: <b>{round(avgStat(data, 'algaeScoredAuto') + avgStat(data, 'algaeScoredTeleop'), 2)}</b> total, <b>{avgStat(data, 'algaeScoredAuto')}</b> auto</li>
-			<li>Avg coral scored: <b>{round(avgStat(data, 'coralScoredAuto') + avgStat(data, 'algaeScoredTeleop'), 2)}</b> total, <b>{avgStat(data, 'coralScoredAuto')}</b> auto</li>
+			<li>Avg coral scored: <b>{round(avgStat(data, 'coralScoredAuto') + avgStat(data, 'coralScoredTeleop'), 2)}</b> total, <b>{avgStat(data, 'coralScoredAuto')}</b> auto</li>
 			<li>Most coral in a match: <b>{getMaxCoral2025(data)}</b> </li>
 			<li>Fewest coral in a match: <b>{getMinNonZeroCoral2025(data)}</b> </li>
 			<li>Avg. game pieces missed: <b>{getAvgMissedTotal2025(data)}</b> </li>
@@ -22,7 +26,7 @@
 			<!-- <li>Avg cycle time: {avgStat(data, 'avgCycleTime')}</li> -->
 			<!-- <li>Preferred pickup method: {getPreferredPickupMethod2025(data)}</li> -->
 		</ul>
-		<pre>{data.length} items</pre>
+		<pre class="cursor-pointer" onclick={() => csvDataTableDialog.open(data, teamNum)}>{data.length} items</pre>
 	{:else}
 		<ul class="grow">
 			<li></li>
@@ -37,3 +41,5 @@
 		<pre>&nbsp;</pre>
 	{/if}
 </Card>
+
+<CsvDataTableDialog bind:this={csvDataTableDialog}/>

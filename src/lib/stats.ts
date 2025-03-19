@@ -1,5 +1,6 @@
 import assert from "./assert";
 import { mode, max } from 'mathjs'
+import { stringify } from 'csv-stringify/browser/esm/sync'
 
 type stringbool = 'TRUE' | 'FALSE';
 type stringnum = `${number}`;
@@ -165,6 +166,60 @@ function parseBool(item: stringbool) {
 
 function isValidScoringLocation2024(location: string): location is ScoringLocation2024 {
 	return location === 'dropped' || location === 'amp' || location === 'speaker' || location === 'trap';
+}
+
+export function exportCsv2025(input: CsvLayout2025Parsed[]): string {
+	let arr: string[][] = [];
+	// headers
+	arr.push(['eventkey', 'role', 'scouterInitials', 'matchNum', 'teamNum', 'startPos', 'mobility', 'pickupMethodCoral', 'pickupMethodAlgae', 'climbStatus', 'stoppedAndRestarted', 'died', 'tipped', 'redCard', 'yellowCard', 'broke', 'autofailure', 'gotStuck', 'didNotFieldRobot', 'otherInfo', 'coralScoredAuto', 'coralScoredTeleop', 'algaeScoredAuto', 'algaeScoredTeleop', 'totalScored', 'canScoreInL1', 'canScoreInL2', 'canScoreInL3', 'canScoreInL4', 'canScoreInNet', 'canScoreInProcessor', 'scoredL1', 'scoredL2', 'scoredL3', 'scoredL4', 'scoredNet', 'scoredProcessor', 'missedReef', 'missedNet', 'missedProcessor', 'climbFailReason', 'auto', 'teleop']);
+	for (let item of input) {
+		arr.push([
+			item.eventkey,
+			item.role,
+			item.scouterInitials,
+			String(item.matchNum),
+			String(item.teamNum),
+			item.startPos,
+			item.mobility,
+			item.pickupMethodCoral,
+			item.pickupMethodAlgae,
+			item.climbStatus,
+			String(item.stoppedAndRestarted),
+			String(item.died),
+			String(item.tipped),
+			String(item.redCard),
+			String(item.yellowCard),
+			String(item.broke),
+			String(item.autofailure),
+			String(item.gotStuck),
+			String(item.didNotFieldRobot),
+			item.otherInfo,
+			String(item.coralScoredAuto),
+			String(item.coralScoredTeleop),
+			String(item.algaeScoredAuto),
+			String(item.algaeScoredTeleop),
+			String(item.totalScored),
+			String(item.canScoreInL1),
+			String(item.canScoreInL2),
+			String(item.canScoreInL3),
+			String(item.canScoreInL4),
+			String(item.canScoreInNet),
+			String(item.canScoreInProcessor),
+			String(item.scoredL1),
+			String(item.scoredL2),
+			String(item.scoredL3),
+			String(item.scoredL4),
+			String(item.scoredNet),
+			String(item.scoredProcessor),
+			String(item.missedReef),
+			String(item.missedNet),
+			String(item.missedProcessor),
+			item.climbFailReason,
+			item.auto.map(item => [item.heldPiece, item.location, item.success].join(',')).join(';'),
+			item.teleop.map(item => [item.heldPiece, item.location, item.success].join(',')).join(';'),
+		]);
+	}
+	return stringify(arr);
 }
 
 export function parseQr2025(input: string): CsvLayout2025Parsed {

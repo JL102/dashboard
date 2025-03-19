@@ -1,37 +1,60 @@
 <script lang="ts">
+	import CsvDataTable from '$lib/CsvDataTable.svelte';
 	import { uploadCsv2025 } from '$lib/firebase';
 	import { db } from '$lib/LocalDB';
 	import QrCodeScanningDialog from '$lib/QrCodeScanningDialog.svelte';
-	import { parseCsvLayout2024, type CsvLayout2024Raw } from '$lib/stats';
+	import { exportCsv2025, parseCsvLayout2024, type CsvLayout2024Raw } from '$lib/stats';
 	import { getPageLayoutContexts } from '$lib/utils';
 	import { parse } from 'csv-parse/browser/esm/sync';
-	import DataTable, {Head, Body, Row, Cell} from '@smui/data-table';
 	import { liveQuery } from 'dexie';
-	import ViewEntryDialog from '$lib/ViewEntryDialog.svelte';
 
 	const { data } = $props();
-	
+
 	let files: FileList | undefined = $state(undefined);
 	let rawData: CsvLayout2024Raw[] = $state([]);
 	// let parsedData: CsvLayout2024Parsed[] = $state.raw([]);
-	let csvData = $derived(liveQuery(() => db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum')));
-	
-	const { snackbar, qrButtonClick, title, downloadButtonClick, uploadButtonClick } = getPageLayoutContexts();
-	qrButtonClick.set(() => {
-		qrScanningDialog.open();
-	});
-	downloadButtonClick.set(undefined);
-	uploadButtonClick.set(async () => {
-		if ($csvData) {
-			// await uploadCsv2024($csvData);
-			await uploadCsv2025($csvData);
+	let csvData = $derived(
+		liveQuery(() => db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum'))
+	);
+
+	const { actionButtons, title, } = getPageLayoutContexts();
+
+	actionButtons.set([
+		{
+			icon: 'table_view',
+			tooltip: 'Download CSV',
+			onclick: async () => {
+				let link = document.createElement('a');
+				link.download = `2025_${data.event.name.replace(/ /g, '_')}.csv`;
+				link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(exportCsv2025($csvData))}`;
+				link.click();
+			}
+		},
+		{
+			icon: 'qr_code',
+			tooltip: 'Scan QR code',
+			onclick: () => qrScanningDialog.open()
+		},
+		{
+			icon: 'upload',
+			tooltip: 'Upload data to cloud',
+			onclick: async () => {
+				if ($csvData) {
+					if (
+						confirm(`${$csvData.length} entries are stored locally. Upload them all to the cloud?`)
+					) {
+						await uploadCsv2025($csvData);
+					}
+				}
+			}
 		}
-	});
+	]);
+
 	title.set('Laptop In Stands dashboard');
 
 	// Function to handle file reading and parsing
 	async function handleFile(file: File) {
-		console.log('handleFile enter)')
+		console.log('handleFile enter)');
 		const reader = new FileReader();
 
 		reader.onload = (event) => {
@@ -52,9 +75,13 @@
 
 		reader.readAsText(file);
 	}
-	
+
 	let qrScanningDialog: QrCodeScanningDialog;
-	let viewEntryDialog: ViewEntryDialog;
+
+	// Upload confirmation
+	// let uploadDialog: Dialog;
+	// let uploadDialogOpen = $state(false);
+	// let uploading = $state(false);
 
 	// $effect(() => {
 	// 	if (files && files[0]) {
@@ -71,44 +98,20 @@
 	// });
 </script>
 
-<QrCodeScanningDialog bind:this={qrScanningDialog} onclose={(action) => {console.log(action)}} />
-<ViewEntryDialog bind:this={viewEntryDialog} />
+<QrCodeScanningDialog
+	bind:this={qrScanningDialog}
+	onclose={(action) => {
+		console.log(action);
+	}}
+/>
 
-<div class='container mx-auto not-prose'>
+<div class="not-prose container mx-auto">
 	<!-- <input type="file" bind:files />
-	
-	<Button onclick={() => {qrScanningDialog.open();}} >Press me</Button>
 
 	{#if files && files[0]}
 		<p>
 			{files[0].name}
 		</p>
 	{/if} -->
-	
-	<DataTable class="w-full">
-		<Head>
-			<Row>
-				<Cell>Key</Cell>
-				<Cell>Team</Cell>
-				<Cell>Scouter</Cell>
-				<Cell>Total Scored</Cell>
-				<Cell>Auto</Cell>
-				<Cell>Teleop</Cell>
-				<Cell>Other Info</Cell>
-			</Row>
-		</Head>
-		<Body>
-			{#each $csvData as item}
-				<Row onclick={() => {viewEntryDialog.open(item)}}>
-					<Cell>{item.key}</Cell>
-					<Cell>{item.teamNum}</Cell>
-					<Cell>{item.scouterInitials}</Cell>
-					<Cell>{item.totalScored}</Cell>
-					<Cell>{item.auto.length} cycles</Cell>
-					<Cell>{item.teleop.length} cycles</Cell>
-					<Cell>{item.otherInfo}</Cell>
-				</Row>
-			{/each}
-		</Body>
-	</DataTable>
+	<CsvDataTable csvData={$csvData} />
 </div>
