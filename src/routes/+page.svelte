@@ -7,15 +7,33 @@
 	import { getPageLayoutContexts } from '$lib/utils';
 	import { parse } from 'csv-parse/browser/esm/sync';
 	import { liveQuery } from 'dexie';
+	import FormField from '@smui/form-field';
+	import Checkbox from '@smui/checkbox';
 
 	const { data } = $props();
+
+	let queryAllEvents = $state(false);
 
 	let files: FileList | undefined = $state(undefined);
 	let rawData: CsvLayout2024Raw[] = $state([]);
 	// let parsedData: CsvLayout2024Parsed[] = $state.raw([]);
-	let csvData = $derived(
-		liveQuery(() => db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum'))
-	);
+	
+	$inspect(queryAllEvents);
+	// let csvData = $derived(
+	// 	queryAllEvents ? liveQuery(() => db.csv2025.toCollection().sortBy('matchNum')) :
+	// 		liveQuery(() => db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum'))
+	// );
+	// let csvData = $derived.by(async () => {
+	// 	if (queryAllEvents) return await db.csv2025.toCollection().sortBy('matchNum');
+	// 	else return await db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum');
+	// })
+	let csvData = $derived.by(() => {
+		queryAllEvents; // change in Svelte behavior leads to the variables used inside liveQuery() to not be listed as a dependency, so this forces it
+		return liveQuery(() => {
+			if (queryAllEvents) return db.csv2025.toCollection().sortBy('matchNum');
+			else return db.csv2025.where('eventkey').equals(data.event.key).sortBy('matchNum')
+		})
+	})
 
 	const { actionButtons, title, } = getPageLayoutContexts();
 
@@ -25,7 +43,8 @@
 			tooltip: 'Download CSV',
 			onclick: async () => {
 				let link = document.createElement('a');
-				link.download = `2025_${data.event.name.replace(/ /g, '_')}.csv`;
+				let name = queryAllEvents ? 'AllEvents' : data.event.name.replace(/ /g, '_');
+				link.download = `2025_${name}.csv`;
 				link.href = `data:text/csv;charset=utf-8,${encodeURIComponent(await exportCsv2025($csvData))}`;
 				link.click();
 			}
@@ -77,12 +96,7 @@
 	}
 
 	let qrScanningDialog: QrCodeScanningDialog;
-
-	// Upload confirmation
-	// let uploadDialog: Dialog;
-	// let uploadDialogOpen = $state(false);
-	// let uploading = $state(false);
-
+	
 	// $effect(() => {
 	// 	if (files && files[0]) {
 	// 		let file = files[0];
@@ -106,6 +120,12 @@
 />
 
 <div class="not-prose container mx-auto">
+	<FormField>
+		<Checkbox bind:checked={queryAllEvents} />
+		{#snippet label()}
+			Query data from ALL events instead of just {data.event.name}?
+		{/snippet}
+	</FormField>
 	<!-- <input type="file" bind:files />
 
 	{#if files && files[0]}
@@ -113,5 +133,7 @@
 			{files[0].name}
 		</p>
 	{/if} -->
-	<CsvDataTable csvData={$csvData} />
+	{#if $csvData}
+		<CsvDataTable csvData={$csvData} />
+	{/if}
 </div>

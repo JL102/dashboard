@@ -97,7 +97,7 @@
 	<FormField>
 		<Checkbox bind:checked={queryAllEvents} />
 		{#snippet label()}
-			Query ALL events instead of just {data.event.name}?
+			Query data from ALL events instead of just {data.event.name}?
 		{/snippet}
 	</FormField>
 	<h1 class="text-lg">
