@@ -1,15 +1,30 @@
 <script lang="ts">
-	import DataTable, { Head, Row, Cell, Body } from '@smui/data-table';
+	import DataTable, { Body, Cell, Head, Label, Pagination, Row } from '@smui/data-table';
+	import Select, { Option } from '@smui/select';
 	import { getScoreCapability2025, type CsvLayout2025Parsed } from './stats';
 	import ViewEntryDialog from './ViewEntryDialog.svelte';
 
 	let {
-		csvData,
+		csvData
 	}: {
 		csvData: CsvLayout2025Parsed[];
 	} = $props();
 
 	let viewEntryDialog: ViewEntryDialog;
+
+	let perPage = $state(10);
+	let currentPage = $state(0);
+
+	const start = $derived(currentPage * perPage);
+	const end = $derived(Math.min(start + perPage, csvData.length));
+	const slice = $derived(csvData.slice(start, end));
+	const lastPage = $derived(Math.max(Math.ceil(csvData.length / perPage) - 1, 0));
+
+	$effect(() => {
+		if (currentPage > lastPage) {
+			currentPage = lastPage;
+		}
+	});
 </script>
 
 <DataTable class="w-full">
@@ -27,7 +42,7 @@
 		</Row>
 	</Head>
 	<Body>
-		{#each csvData as item}
+		{#each slice as item (item.key)}
 			<Row
 				onclick={() => {
 					viewEntryDialog.open(item);
@@ -45,6 +60,22 @@
 			</Row>
 		{/each}
 	</Body>
+	
+	{#snippet  paginate()}
+		<Pagination>
+			{#snippet rowsPerPage()}
+				<Label>Rows per page</Label>
+				<Select variant="outlined" bind:value={perPage} noLabel>
+					<Option value={10}>10</Option>
+					<Option value={25}>25</Option>
+					<Option value={100}>100</Option>
+				</Select>
+			{/snippet}
+			{#snippet total()}
+				{start + 1}-{end} of {csvData.length}
+			{/snippet}
+		</Pagination>
+	{/snippet}
 </DataTable>
 
 <ViewEntryDialog bind:this={viewEntryDialog} />
