@@ -2,13 +2,19 @@
 
 @use '@material/theme/color-palette';
 
+$aembot-blue: #1054a2;
+$offwhite: rgb(243, 243, 243);
+
 // Svelte Colors! (Dark Theme)
 @use '@material/theme/index' as theme with (
-  $primary: #1054a2,
+  $primary: #5ba7ff,
   $secondary: color.scale(#676778, $whiteness: -10%),
   $surface: color.adjust(color-palette.$grey-900, $blue: +4),
   $background: #000,
-  $error: color-palette.$red-700
+  $error: color-palette.$red-700,
+  $on-primary: $offwhite,
+//   $on-secondary: green,
+//   $on-surface: magenta,
 );
 
 html,
@@ -22,4 +28,9 @@ a {
 }
 a:visited {
   color: color.scale(#40b3ff, $lightness: -35%);
+}
+
+.mdc-top-app-bar {
+	background-color: $aembot-blue!important;
+	color: $offwhite!important;
 }

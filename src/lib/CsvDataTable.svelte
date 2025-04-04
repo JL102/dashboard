@@ -2,6 +2,7 @@
 	import DataTable, { Body, Cell, Head, Label, Pagination, Row } from '@smui/data-table';
 	import Select, { Option } from '@smui/select';
 	import { getScoreCapability2025, type CsvLayout2025Parsed } from './stats';
+	import IconButton from '@smui/icon-button';
 	import ViewEntryDialog from './ViewEntryDialog.svelte';
 
 	let {
@@ -60,8 +61,8 @@
 			</Row>
 		{/each}
 	</Body>
-	
-	{#snippet  paginate()}
+
+	{#snippet paginate()}
 		<Pagination>
 			{#snippet rowsPerPage()}
 				<Label>Rows per page</Label>
@@ -74,6 +75,34 @@
 			{#snippet total()}
 				{start + 1}-{end} of {csvData.length}
 			{/snippet}
+			<IconButton
+				class="material-icons"
+				action="first-page"
+				title="First page"
+				onclick={() => (currentPage = 0)}
+				disabled={currentPage === 0}>first_page</IconButton
+			>
+			<IconButton
+				class="material-icons"
+				action="prev-page"
+				title="Prev page"
+				onclick={() => currentPage--}
+				disabled={currentPage === 0}>chevron_left</IconButton
+			>
+			<IconButton
+				class="material-icons"
+				action="next-page"
+				title="Next page"
+				onclick={() => currentPage++}
+				disabled={currentPage === lastPage}>chevron_right</IconButton
+			>
+			<IconButton
+				class="material-icons"
+				action="last-page"
+				title="Last page"
+				onclick={() => (currentPage = lastPage)}
+				disabled={currentPage === lastPage}>last_page</IconButton
+			>
 		</Pagination>
 	{/snippet}
 </DataTable>

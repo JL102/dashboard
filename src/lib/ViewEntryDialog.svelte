@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Dialog, { Header, Title, Content, Actions } from '@smui/dialog';
+	import Dialog, { Header, Title, Content, Actions, InitialFocus } from '@smui/dialog';
 	import type { CsvLayout2025Parsed } from './stats';
-	import Button, { Label } from '@smui/button';
+	import Button, { Label, Icon } from '@smui/button';
 
 	let isOpen = $state(false);
 
@@ -35,7 +35,11 @@
 			{/each}
 		</Content>
 		<Actions>
-			<Button action="done">
+			<!-- <Button onclick={() => {}}>
+				<Icon class="material-icons">delete</Icon>
+				<Label>Delete entry</Label>
+			</Button> -->
+			<Button action="done" defaultAction use={[InitialFocus]} onclick={() => {}}>
 				<Label>Close</Label>
 			</Button>
 		</Actions>
